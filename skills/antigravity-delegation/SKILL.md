@@ -47,7 +47,7 @@ Keep the CLI prompt short; pass only the mission path. Long inline prompts have 
 Use the bundled launcher:
 
 ```bash
-~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
+bash ~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
   --kind explore|implement|tests|review|docs \
   --complexity low|medium|high \
   --mission /absolute/path/to/mission.md \
@@ -64,7 +64,7 @@ The launcher uses `Gemini 3.5 Flash (High)` for every task kind and complexity b
 Run:
 
 ```bash
-~/.codex/skills/antigravity-delegation/scripts/agy-usage
+bash ~/.codex/skills/antigravity-delegation/scripts/agy-usage
 ```
 
 Quota is exposed only through the interactive `/usage` panel in the installed CLI, not a documented non-interactive subcommand. The helper drives that panel in a pseudo-terminal and cleans the output. Treat parsing failure as non-blocking; fall back to opening `agy` and entering `/usage`.

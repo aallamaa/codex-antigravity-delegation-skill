@@ -29,8 +29,8 @@ Paste this prompt into Codex:
 Use the built-in skill-installer skill to install the public GitHub skill from:
 https://github.com/jhiver/codex-antigravity-delegation-skill/tree/main/skills/antigravity-delegation
 
-Verify that SKILL.md is valid, install it under ~/.codex/skills, preserve the
-executable permissions of its scripts, and tell me when it is available.
+Verify that SKILL.md is valid, install the complete skill under ~/.codex/skills,
+including its bundled scripts, and tell me when it is available.
 ```
 
 Alternatively, run the bundled installer directly:
@@ -39,6 +39,9 @@ Alternatively, run the bundled installer directly:
 python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
   --repo jhiver/codex-antigravity-delegation-skill \
   --path skills/antigravity-delegation
+
+chmod +x ~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
+  ~/.codex/skills/antigravity-delegation/scripts/agy-usage
 ```
 
 The skill becomes available to Codex on the next turn. If a directory already
@@ -60,7 +63,7 @@ documentation synchronization, and bounded review work.
 The included launcher can be called directly:
 
 ```bash
-~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
+bash ~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
   --kind implement \
   --complexity medium \
   --mission /absolute/path/to/mission.md \
@@ -71,7 +74,7 @@ The included launcher can be called directly:
 Inspect quota availability with:
 
 ```bash
-~/.codex/skills/antigravity-delegation/scripts/agy-usage
+bash ~/.codex/skills/antigravity-delegation/scripts/agy-usage
 ```
 
 ## Safety
