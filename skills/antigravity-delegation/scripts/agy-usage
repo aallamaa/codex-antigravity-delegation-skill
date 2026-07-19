@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command -v agy >/dev/null || { echo "agy is not installed or not on PATH" >&2; exit 127; }
+command -v expect >/dev/null || { echo "expect is required to read the interactive quota panel" >&2; exit 127; }
+
+raw="$(mktemp "${TMPDIR:-/tmp}/agy-usage.XXXXXX")"
+clean="$(mktemp "${TMPDIR:-/tmp}/agy-usage-clean.XXXXXX")"
+trap 'rm -f "$raw" "$clean"' EXIT
+
+TERM=xterm-256color expect <<'EOF' > "$raw"
+set timeout 45
+log_user 0
+spawn script -q /dev/null /bin/sh -c {stty rows 60 cols 180; exec agy --model "Gemini 3.5 Flash (Low)"}
+expect {
+  -exact {? for shortcuts} {}
+  timeout { puts stderr "Timed out waiting for Antigravity prompt"; exit 1 }
+  eof { puts stderr "Antigravity exited before showing its prompt"; exit 1 }
+}
+send -- "/usage\r"
+expect {
+  -exact {Within each group} {}
+  timeout { puts stderr "Timed out waiting for Antigravity quota panel"; exit 1 }
+  eof { puts stderr "Antigravity exited before showing quota"; exit 1 }
+}
+puts -nonewline $expect_out(buffer)
+close
+EOF
+
+perl -pe 's/\e\][^\a]*(?:\a|\e\\)//g; s/\e\[[0-9;?]*[ -\/]*[@-~]//g; s/\r/\n/g' "$raw" > "$clean"
+
+python3 - "$clean" <<'PY'
+import re
+import sys
+
+text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+start = text.rfind("Models & Quota")
+if start < 0:
+    print("Could not parse quota output. Open `agy` interactively and enter `/usage`.", file=sys.stderr)
+    raise SystemExit(1)
+block = text[start:]
+lines = []
+for raw in block.splitlines():
+    line = raw.strip()
+    if not line or line.startswith(("↑/↓", "esc ", "? for shortcuts", "(")):
+        continue
+    if "Loading quota summary" in line or "\b" in line or len(line) == 1:
+        continue
+    line = re.sub(r"^[└│─ ]+", "", line)
+    line = re.sub(r"\[[█░]+\]", "", line).strip()
+    if line and (not lines or line != lines[-1]):
+        lines.append(line)
+    if "Quota available" in line and len(lines) > 8:
+        break
+print("\n".join(lines))
+PY

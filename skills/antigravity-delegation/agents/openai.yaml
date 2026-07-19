@@ -1,0 +1,4 @@
+interface:
+  display_name: "Antigravity Delegation"
+  short_description: "Route bounded work to Antigravity CLI"
+  default_prompt: "Use $antigravity-delegation to delegate this bounded engineering task efficiently."

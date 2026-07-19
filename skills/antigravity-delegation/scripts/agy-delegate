@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: agy-delegate --kind KIND --complexity LEVEL --mission FILE [options]
+
+Required:
+  --kind explore|implement|tests|review|docs
+  --complexity low|medium|high
+  --mission FILE
+
+Options:
+  --cwd DIR       Repository root (default: current directory)
+  --write         Allow workspace edits (accept-edits + auto approval)
+  --model NAME    Override automatic model selection
+  --timeout TIME  Antigravity print timeout, e.g. 30m or 180m
+  --dry-run       Print the selected command without starting Antigravity
+EOF
+}
+
+kind=""
+complexity=""
+mission=""
+cwd="$PWD"
+write=0
+model=""
+timeout=""
+dry_run=0
+
+while (($#)); do
+  case "$1" in
+    --kind) kind="${2:?missing value for --kind}"; shift 2 ;;
+    --complexity) complexity="${2:?missing value for --complexity}"; shift 2 ;;
+    --mission) mission="${2:?missing value for --mission}"; shift 2 ;;
+    --cwd) cwd="${2:?missing value for --cwd}"; shift 2 ;;
+    --model) model="${2:?missing value for --model}"; shift 2 ;;
+    --timeout) timeout="${2:?missing value for --timeout}"; shift 2 ;;
+    --write) write=1; shift ;;
+    --dry-run) dry_run=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+case "$kind" in explore|implement|tests|review|docs) ;; *) echo "Invalid --kind" >&2; exit 2 ;; esac
+case "$complexity" in low|medium|high) ;; *) echo "Invalid --complexity" >&2; exit 2 ;; esac
+command -v agy >/dev/null || { echo "agy is not installed or not on PATH" >&2; exit 127; }
+[[ -d "$cwd" ]] || { echo "Working directory does not exist: $cwd" >&2; exit 2; }
+mission="$(cd "$(dirname "$mission")" 2>/dev/null && pwd)/$(basename "$mission")" || {
+  echo "Mission file does not exist: $mission" >&2
+  exit 2
+}
+[[ -f "$mission" ]] || { echo "Mission file does not exist: $mission" >&2; exit 2; }
+cwd="$(cd "$cwd" && pwd)"
+
+if [[ -z "$model" ]]; then
+  model="Gemini 3.5 Flash (High)"
+fi
+
+if [[ -z "$timeout" ]]; then
+  case "$complexity" in
+    low) timeout="30m" ;;
+    medium) timeout="60m" ;;
+    high) timeout="180m" ;;
+  esac
+fi
+
+if ! agy models | grep -Fqx "$model"; then
+  echo "Model is not available: $model" >&2
+  echo "Available models:" >&2
+  agy models >&2
+  exit 2
+fi
+
+lock_dir="${TMPDIR:-/tmp}/agy-delegation.lock"
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  echo "Another Antigravity delegation appears to be running: $lock_dir" >&2
+  exit 75
+fi
+cleanup() { rmdir "$lock_dir" 2>/dev/null || true; }
+trap cleanup EXIT INT TERM
+
+prompt="Read the mission file at $mission and execute it exactly. Return the requested concise evidence report."
+cmd=(agy --model "$model" --print-timeout "$timeout" --add-dir "$(dirname "$mission")")
+if ((write)); then
+  cmd+=(--mode accept-edits --dangerously-skip-permissions)
+else
+  cmd+=(--dangerously-skip-permissions)
+fi
+cmd+=(--print "$prompt")
+
+printf 'Antigravity model: %s\nMode: %s\nTimeout: %s\n' "$model" "$([[ $write -eq 1 ]] && echo write || echo read-only)" "$timeout" >&2
+if ((dry_run)); then
+  printf 'cd %q &&' "$cwd"
+  printf ' %q' "${cmd[@]}"
+  printf '\n'
+  exit 0
+fi
+
+cd "$cwd"
+if command -v caffeinate >/dev/null; then
+  caffeinate -dimsu "${cmd[@]}"
+else
+  "${cmd[@]}"
+fi
