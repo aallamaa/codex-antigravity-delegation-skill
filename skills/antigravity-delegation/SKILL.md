@@ -26,7 +26,9 @@ Work locally when the change is trivial, the task is mostly ambiguous product/ar
 - `medium`: several files or nontrivial tests, but architecture is already decided.
 - `high`: broad implementation or difficult investigation with a precise boundary. Split first if independent pieces exist.
 
-Use one Antigravity process at a time. The local CLI and quota have historically been unreliable under concurrent calls.
+Antigravity processes may run concurrently when they operate in distinct
+worktrees or read-only scopes. Never run concurrent write missions in the same
+worktree; serialize dependent missions whose output feeds the next mission.
 
 ## Prepare the mission
 

@@ -73,14 +73,6 @@ if ! agy models | grep -Fqx "$model"; then
   exit 2
 fi
 
-lock_dir="${TMPDIR:-/tmp}/agy-delegation.lock"
-if ! mkdir "$lock_dir" 2>/dev/null; then
-  echo "Another Antigravity delegation appears to be running: $lock_dir" >&2
-  exit 75
-fi
-cleanup() { rmdir "$lock_dir" 2>/dev/null || true; }
-trap cleanup EXIT INT TERM
-
 prompt="Read the mission file at $mission and execute it exactly. Return the requested concise evidence report."
 cmd=(agy --model "$model" --print-timeout "$timeout" --add-dir "$(dirname "$mission")")
 if ((write)); then
