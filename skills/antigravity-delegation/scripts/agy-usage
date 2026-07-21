@@ -11,7 +11,7 @@ trap 'rm -f "$raw" "$clean"' EXIT
 TERM=xterm-256color expect <<'EOF' > "$raw"
 set timeout 45
 log_user 0
-spawn script -q /dev/null /bin/sh -c {stty rows 60 cols 180; exec agy --model "Gemini 3.5 Flash (Low)"}
+spawn script -q /dev/null /bin/sh -c {stty rows 60 cols 180; exec agy --model "gemini-3.6-flash-high"}
 expect {
   -exact {? for shortcuts} {}
   timeout { puts stderr "Timed out waiting for Antigravity prompt"; exit 1 }

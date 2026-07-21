@@ -18,8 +18,9 @@ It includes:
 - `bash` for the delegation launcher;
 - `expect`, `script`, Perl, and Python 3 for the optional quota helper.
 
-The launcher defaults to `Gemini 3.5 Flash (High)`. The model must appear in
-`agy models`; otherwise, pass an available model explicitly.
+The launcher defaults to Gemini 3.6 Flash (High), using the canonical
+`gemini-3.6-flash-high` model ID reported by `agy models`. Otherwise, pass an
+available model explicitly.
 
 ## Install in Codex
 

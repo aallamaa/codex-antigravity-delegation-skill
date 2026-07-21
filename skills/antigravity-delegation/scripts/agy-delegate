@@ -55,7 +55,7 @@ mission="$(cd "$(dirname "$mission")" 2>/dev/null && pwd)/$(basename "$mission")
 cwd="$(cd "$cwd" && pwd)"
 
 if [[ -z "$model" ]]; then
-  model="Gemini 3.5 Flash (High)"
+  model="gemini-3.6-flash-high"
 fi
 
 if [[ -z "$timeout" ]]; then
