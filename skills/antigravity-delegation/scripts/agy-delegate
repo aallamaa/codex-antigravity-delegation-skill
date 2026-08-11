@@ -54,8 +54,26 @@ mission="$(cd "$(dirname "$mission")" 2>/dev/null && pwd)/$(basename "$mission")
 [[ -f "$mission" ]] || { echo "Mission file does not exist: $mission" >&2; exit 2; }
 cwd="$(cd "$cwd" && pwd)"
 
+model_listing="$(agy models)"
+
+# `agy models` prints tab-separated IDs and display names. The --model flag
+# consumes the ID, while users commonly pass the display name as an override.
+# Resolve the preferred model against the installed CLI so model rollouts do
+# not make delegation unusable.
 if [[ -z "$model" ]]; then
-  model="gemini-3.6-flash-high"
+  model="$(printf '%s\n' "$model_listing" | awk -F '\t' '
+    $2 == "Gemini 3.6 Flash (High)" { print $1; exit }
+    $2 == "Gemini 3.5 Flash (High)" { fallback = $1 }
+    END { if (fallback) print fallback }
+  ')"
+  if [[ -z "$model" ]]; then
+    model="$(printf '%s\n' "$model_listing" | awk -F '\t' 'NF >= 2 { print $1; exit }')"
+  fi
+else
+  resolved_model="$(printf '%s\n' "$model_listing" | awk -F '\t' -v requested="$model" '$1 == requested || $2 == requested { print $1; exit }')"
+  if [[ -n "$resolved_model" ]]; then
+    model="$resolved_model"
+  fi
 fi
 
 if [[ -z "$timeout" ]]; then
@@ -66,10 +84,10 @@ if [[ -z "$timeout" ]]; then
   esac
 fi
 
-if ! agy models | grep -Fqx "$model"; then
+if ! printf '%s\n' "$model_listing" | awk -F '\t' -v requested="$model" '$1 == requested { found = 1 } END { exit !found }'; then
   echo "Model is not available: $model" >&2
   echo "Available models:" >&2
-  agy models >&2
+  printf '%s\n' "$model_listing" >&2
   exit 2
 fi
 

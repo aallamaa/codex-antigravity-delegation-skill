@@ -59,7 +59,7 @@ bash ~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
 
 Omit `--write` for analysis, exploration, and review. The launcher auto-approves Antigravity's tool prompts in print mode to prevent unattended hangs; the mission's read-only scope is therefore the guardrail. With `--write`, it additionally uses Antigravity's `accept-edits` mode. Only use `--write` when the requested repository edits are already authorized.
 
-The launcher uses Gemini 3.6 Flash (High), model ID `gemini-3.6-flash-high`, for every task kind and complexity by default. The user prefers this model for both quality and its high available quota. Complexity still controls task splitting and timeout. Override with `--model` only for an explicit user request, an availability failure, or a clearly justified exception. Verify current availability with `agy models`.
+The launcher resolves the preferred Gemini Flash high-effort model from `agy models` at runtime and passes its model ID (currently preferring Gemini 3.6 Flash (High), then Gemini 3.5 Flash (High)). An explicit `--model` may be either the advertised ID or its exact display name. Complexity still controls task splitting and timeout. Verify current availability with `agy models`.
 
 ## Inspect quota
 
