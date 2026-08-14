@@ -59,6 +59,10 @@ bash ~/.codex/skills/antigravity-delegation/scripts/agy-delegate \
 
 Omit `--write` for analysis, exploration, and review. The launcher auto-approves Antigravity's tool prompts in print mode to prevent unattended hangs; the mission's read-only scope is therefore the guardrail. With `--write`, it additionally uses Antigravity's `accept-edits` mode. Only use `--write` when the requested repository edits are already authorized.
 
+The launcher creates a PID-scoped process marker under `${TMPDIR:-/tmp}` and
+removes it on exit. It permits independent delegations to run concurrently; it
+does not make concurrent writes to the same worktree safe.
+
 The launcher resolves the preferred Gemini Flash high-effort model from `agy models` at runtime and passes its model ID (currently preferring Gemini 3.6 Flash (High), then Gemini 3.5 Flash (High)). An explicit `--model` may be either the advertised ID or its exact display name. Complexity still controls task splitting and timeout. Verify current availability with `agy models`.
 
 ## Inspect quota

@@ -7,8 +7,9 @@ and final verification in Codex.
 It includes:
 
 - delegation guidance and safety boundaries;
-- a launcher that selects a model and timeout, serializes Antigravity jobs, and
-  supports read-only or write-enabled missions;
+- a launcher that selects a model and timeout, tracks each job with a
+  PID-scoped process marker, and supports concurrent read-only or
+  write-enabled missions;
 - a helper that reads the interactive Antigravity quota panel.
 
 ## Prerequisites
@@ -21,6 +22,10 @@ It includes:
 The launcher defaults to Gemini 3.6 Flash (High), using the canonical
 `gemini-3.6-flash-high` model ID reported by `agy models`. Otherwise, pass an
 available model explicitly.
+
+Each launcher creates `${TMPDIR:-/tmp}/agy-delegation.<pid>.lock` for its own
+lifetime. Separate delegations can run concurrently. Do not run concurrent
+write missions in the same worktree.
 
 ## Install in Codex
 

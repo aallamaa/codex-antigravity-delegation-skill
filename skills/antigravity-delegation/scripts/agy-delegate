@@ -91,6 +91,17 @@ if ! printf '%s\n' "$model_listing" | awk -F '\t' -v requested="$model" '$1 == r
   exit 2
 fi
 
+# Track this launcher by its own process ID instead of globally serializing all
+# delegations.  Distinct launchers can therefore run concurrently, while the
+# marker still makes active/stale launcher processes observable to operators.
+lock_dir="${TMPDIR:-/tmp}/agy-delegation.${BASHPID}.lock"
+if ! mkdir "$lock_dir" 2>/dev/null; then
+  echo "Antigravity delegation process lock already exists: $lock_dir" >&2
+  exit 75
+fi
+cleanup() { rmdir "$lock_dir" 2>/dev/null || true; }
+trap cleanup EXIT INT TERM
+
 prompt="Read the mission file at $mission and execute it exactly. Return the requested concise evidence report."
 cmd=(agy --model "$model" --print-timeout "$timeout" --add-dir "$(dirname "$mission")")
 if ((write)); then
